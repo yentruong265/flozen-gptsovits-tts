@@ -1,5 +1,6 @@
 import os
 import uuid
+import subprocess
 import requests
 import runpod
 import boto3
@@ -18,10 +19,24 @@ s3 = boto3.client(
 )
 
 def download_file(url, path):
-    r = requests.get(url, timeout=60)
+    r = requests.get(url, timeout=120)
     r.raise_for_status()
     with open(path, "wb") as f:
         f.write(r.content)
+
+def convert_to_ref_wav(input_path, output_path):
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i", input_path,
+        "-ac", "1",
+        "-ar", "24000",
+        "-vn",
+        output_path
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"ffmpeg convert failed: {result.stderr}")
 
 def upload_to_r2(local_path, key):
     s3.upload_file(
@@ -39,16 +54,32 @@ def synthesize_gptsovits(text, ref_audio_path, prompt_text, out_path):
         "ref_audio_path": ref_audio_path,
         "prompt_text": prompt_text,
         "prompt_lang": "vi",
+        "top_k": 15,
+        "top_p": 1.0,
+        "temperature": 1.0,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "batch_threshold": 0.75,
+        "split_bucket": True,
+        "speed_factor": 1.0,
+        "fragment_interval": 0.3,
+        "seed": -1,
         "media_type": "wav",
         "streaming_mode": False,
+        "parallel_infer": True,
+        "repetition_penalty": 1.35
     }
 
     resp = requests.post(
         "http://127.0.0.1:9880/tts",
         json=payload,
-        timeout=300
+        timeout=600
     )
-    resp.raise_for_status()
+
+    if resp.status_code >= 400:
+        raise RuntimeError(
+            f"GPT-SoVITS /tts failed: status={resp.status_code}, body={resp.text}"
+        )
 
     with open(out_path, "wb") as f:
         f.write(resp.content)
@@ -71,10 +102,12 @@ def handler(event):
     workdir = f"/tmp/{job_id}"
     os.makedirs(workdir, exist_ok=True)
 
+    raw_audio_path = f"{workdir}/raw_voice"
     ref_audio_path = f"{workdir}/ref.wav"
     out_path = f"{workdir}/output.wav"
 
-    download_file(ref_audio_url, ref_audio_path)
+    download_file(ref_audio_url, raw_audio_path)
+    convert_to_ref_wav(raw_audio_path, ref_audio_path)
 
     if not prompt_text:
         prompt_text = "Xin chào mọi người, hôm nay tôi muốn chia sẻ một câu chuyện ngắn."
