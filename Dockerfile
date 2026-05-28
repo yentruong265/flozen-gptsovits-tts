@@ -23,13 +23,19 @@ RUN python3.10 -m pip install --no-cache-dir \
 
 RUN git clone https://github.com/RVC-Boss/GPT-SoVITS.git /app/GPT-SoVITS
 
+RUN python3.10 -m pip install --no-cache-dir huggingface_hub
+
 RUN mkdir -p /app/GPT-SoVITS/GPT_SoVITS/pretrained_models && \
-    git clone https://huggingface.co/lj1995/GPT-SoVITS /tmp/gptsovits_models && \
-    cp -r /tmp/gptsovits_models/chinese-hubert-base /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
-    cp -r /tmp/gptsovits_models/chinese-roberta-wwm-ext-large /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
-    cp -r /tmp/gptsovits_models/gsv-v2final-pretrained /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
-    cp -r /tmp/gptsovits_models/fast_langdetect /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
-    rm -rf /tmp/gptsovits_models
+    python3.10 - <<'PY'
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="lj1995/GPT-SoVITS",
+    local_dir="/app/GPT-SoVITS/GPT_SoVITS/pretrained_models",
+    local_dir_use_symlinks=False,
+    resume_download=True
+)
+PY
 
 WORKDIR /app/GPT-SoVITS
 
