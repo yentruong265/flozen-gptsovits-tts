@@ -15,25 +15,27 @@ RUN apt-get update && apt-get install -y \
 
 RUN python3.10 -m pip install --upgrade pip setuptools wheel
 
+# Pin PyTorch CUDA 12.1 for RunPod driver compatibility.
 RUN python3.10 -m pip install --no-cache-dir \
     torch==2.3.1+cu121 \
     torchaudio==2.3.1+cu121 \
     torchvision==0.18.1+cu121 \
     --index-url https://download.pytorch.org/whl/cu121
 
+# Clone GPT-SoVITS.
 RUN git clone https://github.com/RVC-Boss/GPT-SoVITS.git /app/GPT-SoVITS
 
+# Download pretrained models through huggingface_hub, not git-lfs clone.
 RUN python3.10 -m pip install --no-cache-dir huggingface_hub
 
 RUN mkdir -p /app/GPT-SoVITS/GPT_SoVITS/pretrained_models && \
     python3.10 -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='lj1995/GPT-SoVITS', local_dir='/app/GPT-SoVITS/GPT_SoVITS/pretrained_models', local_dir_use_symlinks=False, resume_download=True)"
 
-RUN mkdir -p /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/fast_langdetect
-
 WORKDIR /app/GPT-SoVITS
 
 RUN python3.10 -m pip install -r requirements.txt
 
+# Re-pin torch because GPT-SoVITS requirements may overwrite it.
 RUN python3.10 -m pip install --force-reinstall --no-cache-dir \
     torch==2.3.1+cu121 \
     torchaudio==2.3.1+cu121 \
@@ -45,6 +47,7 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN python3.10 -m pip install -r /app/requirements.txt
 
+# Final torch pin after custom requirements.
 RUN python3.10 -m pip install --force-reinstall --no-cache-dir \
     torch==2.3.1+cu121 \
     torchaudio==2.3.1+cu121 \
@@ -52,18 +55,9 @@ RUN python3.10 -m pip install --force-reinstall --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu121
 
 COPY handler.py /app/handler.py
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 EXPOSE 9880
 
-CMD bash -lc "\
-mkdir -p /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/fast_langdetect && \
-cd /app/GPT-SoVITS && \
-echo 'Starting GPT-SoVITS api_v2...' && \
-python3.10 api_v2.py -a 0.0.0.0 -p 9880 > /tmp/gptsovits_api.log 2>&1 & \
-sleep 180 && \
-echo '===== GPT-SoVITS API LOG =====' && \
-cat /tmp/gptsovits_api.log && \
-echo '===== PORT CHECK =====' && \
-curl -v http://127.0.0.1:9880 || true && \
-cd /app && \
-python3.10 handler.py"
+CMD ["/app/start.sh"]
