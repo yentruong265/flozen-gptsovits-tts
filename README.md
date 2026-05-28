@@ -1,41 +1,31 @@
-# FlozenAI GPT-SoVITS TTS Service
+# FlozenAI GPT-SoVITS RunPod Serverless fixed package
 
-## Build Docker
+Files included:
+- Dockerfile
+- handler.py
+- requirements.txt
+- .github/workflows/docker-build.yml
 
-```bash
-docker build -t flozen-gptsovits-tts .
-```
+Deploy:
+1. Replace your current files with these files.
+2. git add .
+3. git commit -m "Fix GPT-SoVITS RunPod serverless v12"
+4. git push
+5. Wait for GitHub Actions to complete.
+6. RunPod > Manage > New Release > image:
+   yentruongngoc/flozen-gptsovits-tts:v12
 
-## Push Docker
-
-```bash
-docker tag flozen-gptsovits-tts yourdockerhub/flozen-gptsovits-tts:latest
-docker push yourdockerhub/flozen-gptsovits-tts:latest
-```
-
-## Run Local
-
-```bash
-docker run --gpus all -p 9880:9880 flozen-gptsovits-tts
-```
-
-## RunPod Env Variables
-
-R2_ACCOUNT_ID=
-R2_ACCESS_KEY_ID=
-R2_SECRET_ACCESS_KEY=
-R2_BUCKET=
-R2_PUBLIC_BASE_URL=
-
-## Test Payload
-
-```json
+Test input example:
 {
   "input": {
-    "job_id": "test_clone_vi_001",
+    "job_id": "test_clone_vi_012",
     "text": "Xin chào, đây là bản thử nghiệm clone giọng tiếng Việt cho FlozenAI.",
-    "ref_audio_url": "https://your-r2-url/sample.wav",
-    "prompt_text": "Xin chào mọi người, hôm nay tôi muốn chia sẻ một câu chuyện ngắn."
+    "ref_audio_url": "https://pub-93764efb31b244babb2bc41d8cb399bb.r2.dev/voice/Yen_voice_short.wav",
+    "prompt_text": "Transcript chính xác của file audio mẫu 3 đến 10 giây.",
+    "text_lang": "all_zh",
+    "prompt_lang": "all_zh",
+    "ref_start_sec": 0,
+    "ref_duration_sec": 8,
+    "speed_factor": 1.0
   }
 }
-```
