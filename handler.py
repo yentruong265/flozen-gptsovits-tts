@@ -50,10 +50,10 @@ def upload_to_r2(local_path, key):
 def synthesize_gptsovits(text, ref_audio_path, prompt_text, out_path):
     payload = {
         "text": text,
-        "text_lang": "vi",
+        "text_lang": "all_zh",
         "ref_audio_path": ref_audio_path,
         "prompt_text": prompt_text,
-        "prompt_lang": "vi",
+        "prompt_lang": "all_zh",
         "top_k": 15,
         "top_p": 1.0,
         "temperature": 1.0,
