@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y \
 
 RUN python3.10 -m pip install --upgrade pip setuptools wheel
 
-# Pin torch CUDA 12.1 để không bị lỗi NVIDIA driver too old
 RUN python3.10 -m pip install --no-cache-dir \
     torch==2.3.1+cu121 \
     torchaudio==2.3.1+cu121 \
@@ -29,13 +28,13 @@ RUN mkdir -p /app/GPT-SoVITS/GPT_SoVITS/pretrained_models && \
     cp -r /tmp/gptsovits_models/chinese-hubert-base /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
     cp -r /tmp/gptsovits_models/chinese-roberta-wwm-ext-large /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
     cp -r /tmp/gptsovits_models/gsv-v2final-pretrained /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
+    cp -r /tmp/gptsovits_models/fast_langdetect /app/GPT-SoVITS/GPT_SoVITS/pretrained_models/ && \
     rm -rf /tmp/gptsovits_models
 
 WORKDIR /app/GPT-SoVITS
 
 RUN python3.10 -m pip install -r requirements.txt
 
-# Ép lại torch lần nữa vì requirements.txt của GPT-SoVITS có thể ghi đè torch
 RUN python3.10 -m pip install --force-reinstall --no-cache-dir \
     torch==2.3.1+cu121 \
     torchaudio==2.3.1+cu121 \
@@ -47,7 +46,6 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN python3.10 -m pip install -r /app/requirements.txt
 
-# Ép lại torch lần cuối vì requirements.txt riêng của bạn cũng có torch/torchaudio
 RUN python3.10 -m pip install --force-reinstall --no-cache-dir \
     torch==2.3.1+cu121 \
     torchaudio==2.3.1+cu121 \
