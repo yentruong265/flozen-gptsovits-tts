@@ -27,4 +27,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: yentruongngoc/flozen-gptsovits-tts:v8
+          tags: yentruongngoc/flozen-gptsovits-tts:v9
